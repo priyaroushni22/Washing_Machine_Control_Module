@@ -1,0 +1,216 @@
+`timescale 1ns/1ps
+////////////////////////////////////////////////////////////////////////////////// 
+// Project Name: Washing Machine Control Module 
+// Tools : Verilog
+//////////////////////////////////////////////////////////////////////////////////
+
+module washingmachine
+(
+  input wire clk, reset,
+  input wire start, door_close, filled, detergent_added, cycle_timeout, drained, spin_timeout  //Input
+  output reg door_lock, fill_value_on, motor_on, drain_value_on, done, water_wash, soap_wash   //Output
+);
+
+  //////////////////// Name of states////////////////////////////////////////////////
+  parameter 
+    check_door = 3'b000,
+    fill_water = 3'b001,
+    add_detergent = 3'b010,
+    cycle = 3'b011,
+    drain_water = 3'b100,
+    spin = 3'b101;
+  
+  reg [2:0] present_state, next_state;
+  
+  always @(posedge clk, posedge reset)
+  begin 
+    if (reset)
+    begin
+       present_state <= check_door;
+    end
+    else
+    begin
+      present_state <= next_state;
+    end
+  end
+  
+  always @(start or door_close or filled or detergent_added or water_wash or cycle_timeout or drained or spin_timeout or water_wash or soap_wash)
+  begin
+    case(present_state)
+      check_door:
+        if (start == 1 && door_close == 1)
+        begin
+          next_state = fill_water;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 0;
+          water_wash = 0; 
+          soap_wash = 0;
+        end
+        else
+        begin
+          next_state = present_state;
+          door_lock = 0;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 0;
+          water_wash = 0; 
+          soap_wash = 0;
+        end
+      
+      fill_water:
+        if (filled == 1)
+        begin 
+          if (soap_wash == 0)
+          begin
+            next_state = add_detergent;
+            door_lock = 1;
+            fill_value_on = 0;
+            motor_on = 0;
+            drain_value_on = 0;
+            done = 0;
+            water_wash = 0; 
+            soap_wash = 1;
+          end
+          else
+          begin
+            next_state = cycle;
+            door_lock = 1;
+            fill_value_on = 0;
+            motor_on = 0;
+            drain_value_on = 0;
+            done = 0;
+            water_wash = 1; 
+            soap_wash = 1;
+          end
+        end
+        else
+        begin
+          next_state = present_state;
+          door_lock = 1;
+          fill_value_on = 1;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 0;
+          // water_wash = 0; 
+          // soap_wash = 0;
+        end
+      
+      add_detergent:
+        if (detergent_added == 1)
+        begin
+          next_state = cycle;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 0;
+          // water_wash = 0; 
+          soap_wash = 1;
+        end
+        else 
+        begin
+          next_state = present_state;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 0;
+          water_wash = 0; 
+          soap_wash = 1;
+        end
+      
+      cycle:
+        if (cycle_timeout == 1)
+        begin
+          next_state = drain_water;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 0;
+          // water_wash = 0; 
+          // soap_wash = 1;
+        end
+        else
+        begin
+          next_state = present_state;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 1;
+          drain_value_on = 0;
+          done = 0;
+          // water_wash = 0; 
+          // soap_wash = 1;
+        end
+      
+      drain_water:
+        if (drained == 1)
+        begin
+          if (water_wash == 0)
+          begin
+            next_state = fill_water;
+            door_lock = 1;
+            fill_value_on = 0;
+            motor_on = 0;
+            drain_value_on = 0;
+            done = 0;
+            // water_wash = 1; 
+            soap_wash = 1;
+          end
+          else
+          begin
+            next_state = spin;
+            door_lock = 1;
+            fill_value_on = 0;
+            motor_on = 0;
+            drain_value_on = 0;
+            done = 0;
+            water_wash = 1; 
+            soap_wash = 1;
+          end
+        end
+        else
+        begin
+          next_state = present_state;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 1;
+          done = 0;
+          // water_wash = 1; 
+          soap_wash = 1;
+        end
+      
+      spin:
+        if (spin_timeout == 1)
+        begin
+          next_state = check_door;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 0;
+          done = 1;
+          water_wash = 1; 
+          soap_wash = 1;
+        end
+        else
+        begin
+          next_state = present_state;
+          door_lock = 1;
+          fill_value_on = 0;
+          motor_on = 0;
+          drain_value_on = 1;
+          done = 0;
+          water_wash = 1; 
+          soap_wash = 1;
+        end
+      
+      default:
+        next_state = check_door;
+    endcase
+  end
+endmodule
