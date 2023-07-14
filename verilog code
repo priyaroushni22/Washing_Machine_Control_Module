@@ -7,8 +7,8 @@
 module washingmachine
 (
   input wire clk, reset,
-  input wire start, door_close, filled, detergent_added, cycle_timeout, drained, spin_timeout  //Input
-  output reg door_lock, fill_value_on, motor_on, drain_value_on, done, water_wash, soap_wash   //Output
+  input wire start, door_close, filled, detergent_added, cycle_timeout, drained, spin_timeout, //Input
+  output reg door_lock, fill_value_on, motor_on, drain_value_on, done, water_wash, soap_wash,   //Output
 );
 
   //////////////////// Name of states////////////////////////////////////////////////
